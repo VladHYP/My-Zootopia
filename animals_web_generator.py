@@ -18,33 +18,38 @@ def write_html(file_path, content):
         handle.write(content)
 
 def build_animals_info(animals):
-    """Build HTML list items for each animal."""
+    """Serialize animals into final 'Like A Pro' HTML card markup."""
     output = ""
 
     for animal in animals:
-        output += '<li class="cards__item">\n'
-
-        # Name
-        if "name" in animal:
-            output += f"Name: {animal['name']}<br/>\n"
+        name = animal.get("name")
 
         characteristics = animal.get("characteristics", {})
-
-        # Diet
         diet = characteristics.get("diet")
-        if diet:
-            output += f"Diet: {diet}<br/>\n"
-
-        # First location
-        locations = animal.get("locations")
-        if isinstance(locations, list) and len(locations) > 0:
-            output += f"Location: {locations[0]}<br/>\n"
-
-        # Type
         animal_type = characteristics.get("type")
-        if animal_type:
-            output += f"Type: {animal_type}<br/>\n"
 
+        locations = animal.get("locations")
+        first_location = None
+        if isinstance(locations, list) and len(locations) > 0:
+            first_location = locations[0]
+
+        output += '<li class="cards__item">\n'
+
+        # Title
+        if name:
+            output += f'  <div class="card__title">{name}</div>\n'
+
+        # Text block
+        output += '  <p class="card__text">\n'
+
+        if diet:
+            output += f'      <strong>Diet:</strong> {diet}<br/>\n'
+        if first_location:
+            output += f'      <strong>Location:</strong> {first_location}<br/>\n'
+        if animal_type:
+            output += f'      <strong>Type:</strong> {animal_type}<br/>\n'
+
+        output += "  </p>\n"
         output += "</li>\n"
 
     return output
