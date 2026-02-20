@@ -17,40 +17,48 @@ def write_html(file_path, content):
     with open(file_path, "w", encoding="utf-8") as handle:
         handle.write(content)
 
+def serialize_animal(animal):
+    """Serialize a single animal into HTML card markup."""
+    output = ""
+
+    name = animal.get("name")
+
+    characteristics = animal.get("characteristics", {})
+    diet = characteristics.get("diet")
+    animal_type = characteristics.get("type")
+
+    locations = animal.get("locations")
+    first_location = None
+    if isinstance(locations, list) and len(locations) > 0:
+        first_location = locations[0]
+
+    output += '<li class="cards__item">\n'
+
+    if name:
+        output += f'  <div class="card__title">{name}</div>\n'
+
+    output += '  <p class="card__text">\n'
+
+    if diet:
+        output += f'      <strong>Diet:</strong> {diet}<br/>\n'
+
+    if first_location:
+        output += f'      <strong>Location:</strong> {first_location}<br/>\n'
+
+    if animal_type:
+        output += f'      <strong>Type:</strong> {animal_type}<br/>\n'
+
+    output += "  </p>\n"
+    output += "</li>\n"
+
+    return output
+
 def build_animals_info(animals):
-    """Serialize animals into final 'Like A Pro' HTML card markup."""
+    """Build HTML for all animals."""
     output = ""
 
     for animal in animals:
-        name = animal.get("name")
-
-        characteristics = animal.get("characteristics", {})
-        diet = characteristics.get("diet")
-        animal_type = characteristics.get("type")
-
-        locations = animal.get("locations")
-        first_location = None
-        if isinstance(locations, list) and len(locations) > 0:
-            first_location = locations[0]
-
-        output += '<li class="cards__item">\n'
-
-        # Title
-        if name:
-            output += f'  <div class="card__title">{name}</div>\n'
-
-        # Text block
-        output += '  <p class="card__text">\n'
-
-        if diet:
-            output += f'      <strong>Diet:</strong> {diet}<br/>\n'
-        if first_location:
-            output += f'      <strong>Location:</strong> {first_location}<br/>\n'
-        if animal_type:
-            output += f'      <strong>Type:</strong> {animal_type}<br/>\n'
-
-        output += "  </p>\n"
-        output += "</li>\n"
+        output += serialize_animal(animal)
 
     return output
 
