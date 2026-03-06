@@ -1,81 +1,85 @@
-import json
+import requests
 
 
-def load_data(file_path):
-    """Loads a JSON file."""
-    with open(file_path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-def read_template(file_path):
-    """Reads an HTML template file and returns it as a string."""
-    with open(file_path, "r", encoding="utf-8") as handle:
-        return handle.read()
+API_KEY = "dcFkQi5UeOaNzyvXthvFiu1SLS1XBccDnzb4wM5N"
+API_URL = "https://api.api-ninjas.com/v1/animals"
 
 
-def write_html(file_path, content):
-    """Writes the generated HTML content into a file."""
-    with open(file_path, "w", encoding="utf-8") as handle:
-        handle.write(content)
+def fetch_data(animal_name):
+    """
+    Fetch animal data from the API Ninjas Animals API.
+    Returns a list of animals, or an empty list if nothing is found.
+    """
+    headers = {
+        "X-Api-Key": API_KEY
+    }
+    params = {
+        "name": animal_name
+    }
 
-def serialize_animal(animal):
-    """Serialize a single animal into HTML card markup."""
-    output = ""
+    response = requests.get(API_URL, headers=headers, params=params)
+    response.raise_for_status()
+    return response.json()
 
-    name = animal.get("name")
 
-    characteristics = animal.get("characteristics", {})
-    diet = characteristics.get("diet")
-    animal_type = characteristics.get("type")
+def serialize_animal(animal_obj):
+    """
+    Convert a single animal dictionary into an HTML <li> element.
+    """
+    name = animal_obj.get("name", "Unknown")
+    characteristics = animal_obj.get("characteristics", {})
+    locations = animal_obj.get("locations", [])
 
-    locations = animal.get("locations")
-    first_location = None
-    if isinstance(locations, list) and len(locations) > 0:
-        first_location = locations[0]
+    diet = characteristics.get("diet", "Unknown")
+    animal_type = characteristics.get("type", "Unknown")
+    location = locations[0] if locations else "Unknown"
 
-    output += '<li class="cards__item">\n'
-
-    if name:
-        output += f'  <div class="card__title">{name}</div>\n'
-
-    output += '  <p class="card__text">\n'
-
-    if diet:
-        output += f'      <strong>Diet:</strong> {diet}<br/>\n'
-
-    if first_location:
-        output += f'      <strong>Location:</strong> {first_location}<br/>\n'
-
-    if animal_type:
-        output += f'      <strong>Type:</strong> {animal_type}<br/>\n'
-
-    output += "  </p>\n"
-    output += "</li>\n"
-
+    output = (
+        '<li class="cards__item">\n'
+        f'  <div class="card__title">{name}</div>\n'
+        '  <p class="card__text">\n'
+        f'    <strong>Diet:</strong> {diet}<br/>\n'
+        f'    <strong>Location:</strong> {location}<br/>\n'
+        f'    <strong>Type:</strong> {animal_type}<br/>\n'
+        '  </p>\n'
+        '</li>\n'
+    )
     return output
 
-def build_animals_info(animals):
-    """Build HTML for all animals."""
-    output = ""
 
-    for animal in animals:
+def generate_animals_html(data):
+    """
+    Generate the HTML block for all returned animals.
+    If no animals are found, return an error message block.
+    """
+    if not data:
+        return '<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
+
+    output = ""
+    for animal in data:
         output += serialize_animal(animal)
 
     return output
 
+
+def main():
+    animal_name = input("Enter a name of an animal: ").strip()
+    animals_data = fetch_data(animal_name)
+    animals_html = generate_animals_html(animals_data)
+
+    with open("animals_template.html", "r", encoding="utf-8") as file:
+        template = file.read()
+
+    if not animals_data:
+        animals_html = f'<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
+
+    final_html = template.replace("__REPLACE_ANIMALS_INFO__", animals_html)
+
+    with open("animals.html", "w", encoding="utf-8") as file:
+        file.write(final_html)
+
+    print("Website was successfully generated to the file animals.html.")
+
+
 if __name__ == "__main__":
-    # load animal data
-    animals_data = load_data("animals_data.json")
-
-    # build animals info string
-    animals_info = build_animals_info(animals_data)
-
-    # read HTML template
-    template = read_template("animals_template.html")
-
-    # replace placeholder in template
-    final_html = template.replace("__REPLACE_ANIMALS_INFO__", animals_info)
-
-    # write new HTML file
-    write_html("animals.html", final_html)
-
-    print("animals.html generated successfully.")
+    main()
