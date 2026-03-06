@@ -1,26 +1,4 @@
-import requests
-
-
-API_KEY = "dcFkQi5UeOaNzyvXthvFiu1SLS1XBccDnzb4wM5N"
-API_URL = "https://api.api-ninjas.com/v1/animals"
-
-
-def fetch_data(animal_name):
-    """
-    Fetch animal data from the API Ninjas Animals API.
-    Returns a list of animals, or an empty list if nothing is found.
-    """
-    headers = {
-        "X-Api-Key": API_KEY
-    }
-    params = {
-        "name": animal_name
-    }
-
-    response = requests.get(API_URL, headers=headers, params=params)
-    response.raise_for_status()
-    return response.json()
-
+import data_fetcher
 
 def serialize_animal(animal_obj):
     """
@@ -64,7 +42,7 @@ def generate_animals_html(data):
 
 def main():
     animal_name = input("Enter a name of an animal: ").strip()
-    animals_data = fetch_data(animal_name)
+    animals_data = data_fetcher.fetch_data(animal_name)
     animals_html = generate_animals_html(animals_data)
 
     with open("animals_template.html", "r", encoding="utf-8") as file:
