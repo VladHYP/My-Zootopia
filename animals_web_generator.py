@@ -1,38 +1,43 @@
 import data_fetcher
 
+
 def serialize_animal(animal_obj):
     """
     Convert a single animal dictionary into an HTML <li> element.
+    Only include fields that actually exist.
     """
-    name = animal_obj.get("name", "Unknown")
+    output = '<li class="cards__item">\n'
+
+    name = animal_obj.get("name")
+    if name:
+        output += f'  <div class="card__title">{name}</div>\n'
+
+    output += '  <p class="card__text">\n'
+
     characteristics = animal_obj.get("characteristics", {})
     locations = animal_obj.get("locations", [])
 
-    diet = characteristics.get("diet", "Unknown")
-    animal_type = characteristics.get("type", "Unknown")
-    location = locations[0] if locations else "Unknown"
+    diet = characteristics.get("diet")
+    if diet:
+        output += f'    <strong>Diet:</strong> {diet}<br/>\n'
 
-    output = (
-        '<li class="cards__item">\n'
-        f'  <div class="card__title">{name}</div>\n'
-        '  <p class="card__text">\n'
-        f'    <strong>Diet:</strong> {diet}<br/>\n'
-        f'    <strong>Location:</strong> {location}<br/>\n'
-        f'    <strong>Type:</strong> {animal_type}<br/>\n'
-        '  </p>\n'
-        '</li>\n'
-    )
+    if locations:
+        output += f'    <strong>Location:</strong> {locations[0]}<br/>\n'
+
+    animal_type = characteristics.get("type")
+    if animal_type:
+        output += f'    <strong>Type:</strong> {animal_type}<br/>\n'
+
+    output += '  </p>\n'
+    output += '</li>\n'
+
     return output
 
 
 def generate_animals_html(data):
     """
     Generate the HTML block for all returned animals.
-    If no animals are found, return an error message block.
     """
-    if not data:
-        return '<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
-
     output = ""
     for animal in data:
         output += serialize_animal(animal)
@@ -41,15 +46,20 @@ def generate_animals_html(data):
 
 
 def main():
+    """
+    Ask the user for an animal name, fetch matching animal data,
+    and generate the animals.html file.
+    """
     animal_name = input("Enter a name of an animal: ").strip()
     animals_data = data_fetcher.fetch_data(animal_name)
-    animals_html = generate_animals_html(animals_data)
-
-    with open("animals_template.html", "r", encoding="utf-8") as file:
-        template = file.read()
 
     if not animals_data:
         animals_html = f'<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
+    else:
+        animals_html = generate_animals_html(animals_data)
+
+    with open("animals_template.html", "r", encoding="utf-8") as file:
+        template = file.read()
 
     final_html = template.replace("__REPLACE_ANIMALS_INFO__", animals_html)
 
