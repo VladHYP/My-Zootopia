@@ -1,77 +1,63 @@
-import requests
-
-
-API_KEY = "dcFkQi5UeOaNzyvXthvFiu1SLS1XBccDnzb4wM5N"
-API_URL = "https://api.api-ninjas.com/v1/animals"
-
-
-def fetch_data(animal_name):
-    """
-    Fetch animal data from the API Ninjas Animals API.
-    Returns a list of animals, or an empty list if nothing is found.
-    """
-    headers = {
-        "X-Api-Key": API_KEY
-    }
-    params = {
-        "name": animal_name
-    }
-
-    response = requests.get(API_URL, headers=headers, params=params)
-    response.raise_for_status()
-    return response.json()
+import data_fetcher
 
 
 def serialize_animal(animal_obj):
     """
     Convert a single animal dictionary into an HTML <li> element.
+    Only include fields that actually exist.
     """
-    name = animal_obj.get("name", "Unknown")
+    name = animal_obj.get("name")
     characteristics = animal_obj.get("characteristics", {})
     locations = animal_obj.get("locations", [])
 
-    diet = characteristics.get("diet", "Unknown")
-    animal_type = characteristics.get("type", "Unknown")
-    location = locations[0] if locations else "Unknown"
+    output = '<li class="cards__item">\n'
 
-    output = (
-        '<li class="cards__item">\n'
-        f'  <div class="card__title">{name}</div>\n'
-        '  <p class="card__text">\n'
-        f'    <strong>Diet:</strong> {diet}<br/>\n'
-        f'    <strong>Location:</strong> {location}<br/>\n'
-        f'    <strong>Type:</strong> {animal_type}<br/>\n'
-        '  </p>\n'
-        '</li>\n'
-    )
+    if name:
+        output += f'  <div class="card__title">{name}</div>\n'
+
+    output += '  <p class="card__text">\n'
+
+    diet = characteristics.get("diet")
+    if diet:
+        output += f'    <strong>Diet:</strong> {diet}<br/>\n'
+
+    location = locations[0] if locations else None
+    if location:
+        output += f'    <strong>Location:</strong> {location}<br/>\n'
+
+    animal_type = characteristics.get("type")
+    if animal_type:
+        output += f'    <strong>Type:</strong> {animal_type}<br/>\n'
+
+    output += '  </p>\n'
+    output += '</li>\n'
+
     return output
 
 
-def generate_animals_html(data):
+def generate_animals_html(data, animal_name):
     """
-    Generate the HTML block for all returned animals.
-    If no animals are found, return an error message block.
+    Generate HTML for all animals or an error message if none found.
     """
     if not data:
-        return '<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
+        return f'<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
 
-    output = ""
-    for animal in data:
-        output += serialize_animal(animal)
-
-    return output
+    return "".join(serialize_animal(animal) for animal in data)
 
 
 def main():
+    """
+    Main entry point of the program.
+    Prompts the user for an animal name, fetches data,
+    and generates an HTML file based on a template.
+    """
     animal_name = input("Enter a name of an animal: ").strip()
-    animals_data = fetch_data(animal_name)
-    animals_html = generate_animals_html(animals_data)
+
+    animals_data = data_fetcher.fetch_data(animal_name)
+    animals_html = generate_animals_html(animals_data, animal_name)
 
     with open("animals_template.html", "r", encoding="utf-8") as file:
         template = file.read()
-
-    if not animals_data:
-        animals_html = f'<h2>The animal "{animal_name}" doesn\'t exist.</h2>'
 
     final_html = template.replace("__REPLACE_ANIMALS_INFO__", animals_html)
 
@@ -83,3 +69,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
